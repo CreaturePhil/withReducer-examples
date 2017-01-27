@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>React withReducer Counter Example</title>
+    <script src="https://unpkg.com/react@latest/dist/react.js"></script>
+    <script src="https://unpkg.com/react-dom@latest/dist/react-dom.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const withReducer = (stateName, dispatchName, reducer, initialState) => {
+        return BaseComponent => {
+          return class extends React.Component {
+          	constructor(props) {
+          		super(props)
+          		this.state = {stateValue: initialState}
+              this.dispatch = this.dispatch.bind(this)
+        		}
+
+            dispatch(action) {
+            	const state = ({ stateValue }) =>
+                ({ stateValue: reducer(stateValue, action) })
+            	this.setState(state)
+            }
+
+            render() {
+            	const props = Object.assign({}, this.props, {
+                [stateName]: this.state.stateValue,
+                [dispatchName]: this.dispatch
+              })
+
+            	return (
+              	<div>
+                	<BaseComponent {...props}  />
+                </div>
+              )
+            }
+          }
+        }
+      }
+
+      const counterReducer = (count, action) => {
+        switch (action.type) {
+        case 'INCREMENT':
+          return count + 1
+        case 'DECREMENT':
+          return count - 1
+        default:
+          return count
+        }
+      }
+
+      const enhance = withReducer('counter', 'dispatch', counterReducer, 0)
+      const Counter = enhance(({ counter, dispatch }) =>
+        <div>
+          Count: {counter}
+          <button onClick={() => dispatch({ type: 'INCREMENT' })}>Increment</button>
+          <button onClick={() => dispatch({ type: 'DECREMENT' })}>Decrement</button>
+        </div>
+      )
+
+      ReactDOM.render(
+        <Counter />,
+        document.getElementById('root')
+      )
+    </script>
+  </body>
+</html>

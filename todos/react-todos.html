@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>React withReducer Todos Example</title>
+    <script src="https://unpkg.com/react@latest/dist/react.js"></script>
+    <script src="https://unpkg.com/react-dom@latest/dist/react-dom.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const withReducer = (stateName, dispatchName, reducer, initialState) => {
+        return BaseComponent => {
+          return class extends React.Component {
+          	constructor(props) {
+          		super(props)
+          		this.state = {stateValue: initialState}
+              this.dispatch = this.dispatch.bind(this)
+        		}
+
+            dispatch(action) {
+            	const state = ({ stateValue }) =>
+                ({ stateValue: reducer(stateValue, action) })
+            	this.setState(state)
+            }
+
+            render() {
+            	const props = Object.assign({}, this.props, {
+                [stateName]: this.state.stateValue,
+                [dispatchName]: this.dispatch
+              })
+
+            	return (
+              	<div>
+                	<BaseComponent {...props}  />
+                </div>
+              )
+            }
+          }
+        }
+      }
+
+      const combineReducers = reducers => {
+        return (state = {}, action) => {
+          return Object.keys(reducers).reduce(
+            (nextState, key) => {
+              nextState[key] = reducers[key](state[key], action)
+              return nextState
+            },
+            {}
+          )
+        }
+      }
+
+      const todo = (state = {}, action) => {
+        switch (action.type) {
+          case 'ADD_TODO':
+            return {
+              id: action.id,
+              text: action.text,
+              completed: false
+            }
+          case 'TOGGLE_TODO':
+            if (state.id !== action.id) {
+              return state
+            }
+
+            return Object.assign({}, state, {
+              completed: !state.completed
+            })
+
+          default:
+            return state
+        }
+      }
+
+      const todos = (state = [], action) => {
+        switch (action.type) {
+          case 'ADD_TODO':
+            return [
+              ...state,
+              todo(undefined, action)
+            ]
+          case 'TOGGLE_TODO':
+            return state.map(t =>
+              todo(t, action)
+            )
+          default:
+            return state
+        }
+      }
+
+      const visibilityFilter = (state = 'SHOW_ALL', action) => {
+        switch (action.type) {
+          case 'SET_VISIBILITY_FILTER':
+            return action.filter
+          default:
+            return state
+        }
+      }
+
+      const todoApp = combineReducers({
+        todos,
+        visibilityFilter
+      })
+
+      let nextTodoId = 0
+
+      const AddTodo = ({ dispatch }) => {
+        let input
+
+        return (
+          <div>
+            <form onSubmit={e => {
+              e.preventDefault()
+              if (!input.value.trim()) {
+                return
+              }
+              dispatch({
+                type: 'ADD_TODO',
+                id: nextTodoId++,
+                text: input.value
+              })
+              input.value = ''
+            }}>
+              <input ref={node => {
+                input = node
+              }} />
+              <button type="submit">
+                Add Todo
+              </button>
+            </form>
+          </div>
+        )
+      }
+
+      const Todo = ({ onClick, completed, text }) => (
+        <li
+          onClick={onClick}
+          style={{
+            textDecoration: completed ? 'line-through' : 'none'
+          }}
+        >
+          {text}
+        </li>
+      )
+
+      const TodoList = ({ todos, onTodoClick }) => (
+        <ul>
+          {todos.map(todo =>
+            <Todo
+              key={todo.id}
+              {...todo}
+              onClick={() => onTodoClick(todo.id)}
+            />
+          )}
+        </ul>
+      )
+
+      const FilterLink = ({ filter, text, active, onFilterClick }) => {
+        if (active) {
+          return <span>{text}</span>
+        }
+
+        return (
+          <a href="#"
+             onClick={e => {
+               e.preventDefault()
+               onFilterClick(filter)
+             }}
+          >
+            {text}
+          </a>
+        )
+      }
+
+      const Footer = ({ currentFilter, onFilterClick }) => (
+        <p>
+          Show:
+          {" "}
+          <FilterLink
+            filter="SHOW_ALL"
+            text="All"
+            onFilterClick={onFilterClick}
+            active={"SHOW_ALL" === currentFilter}
+          >
+            All
+          </FilterLink>
+          {", "}
+          <FilterLink
+            filter="SHOW_ACTIVE"
+            text="Active"
+            onFilterClick={onFilterClick}
+            active={"SHOW_ACTIVE" === currentFilter}
+          >
+            Active
+          </FilterLink>
+          {", "}
+          <FilterLink
+            filter="SHOW_COMPLETED"
+            text="Completed"
+            onFilterClick={onFilterClick}
+            active={"SHOW_COMPLETED" === currentFilter}
+          >
+            Completed
+          </FilterLink>
+        </p>
+      )
+
+      const getVisibleTodos = (todos, filter) => {
+        switch (filter) {
+          case 'SHOW_ALL':
+            return todos
+          case 'SHOW_COMPLETED':
+            return todos.filter(t => t.completed)
+          case 'SHOW_ACTIVE':
+            return todos.filter(t => !t.completed)
+        }
+      }
+
+      const initialState = {todos: [], visibilityFilter: 'SHOW_ALL'}
+      const enhance = withReducer('state', 'dispatch', todoApp, initialState)
+      const App = enhance(({ state, dispatch }) =>
+        <div>
+          <AddTodo dispatch={dispatch} />
+          <TodoList
+            todos={getVisibleTodos(state.todos, state.visibilityFilter)}
+            onTodoClick={id => dispatch({type: 'TOGGLE_TODO', id})}
+          />
+          <Footer
+            currentFilter={state.visibilityFilter}
+            onFilterClick={
+              filter => dispatch({type: 'SET_VISIBILITY_FILTER', filter})
+            }
+          />
+        </div>
+      )
+
+      ReactDOM.render(
+        <App />,
+        document.getElementById('root')
+      )
+    </script>
+  </body>
+</html>
