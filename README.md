@@ -28,7 +28,7 @@ withReducer :: (State s, Action a, Component c) => String -> String -> ((s, a) -
 
 - Counter: [React](https://creaturephil.github.io/withReducer-examples/counter/react-counter.html) | [Preact](https://creaturephil.github.io/withReducer-examples/counter/preact-counter.html) |
 [Inferno](https://creaturephil.github.io/withReducer-examples/counter/inferno-counter.html)
-- Todos: [React](creaturephil.github.io/withReducer-examples/todos/react-todos.html) | [Preact](https://creaturephil.github.io/withReducer-examples/todos/preact-todos.html) |
+- Todos: [React](https://creaturephil.github.io/withReducer-examples/todos/react-todos.html) | [Preact](https://creaturephil.github.io/withReducer-examples/todos/preact-todos.html) |
 [Inferno](https://creaturephil.github.io/withReducer-examples/todos/inferno-todos.html)
 
 # LICENSE
