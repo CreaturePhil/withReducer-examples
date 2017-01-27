@@ -21,7 +21,7 @@ withReducer<S, A>(
 ```
 
 ```haskell
-withReducer :: (State s, Action a, Component c) => String -> String -> ((s, a) -> a) -> s -> c
+withReducer :: (State s, Action a, Component c) => String -> String -> (s -> a -> s) -> s -> c
 ```
 
 # Examples
